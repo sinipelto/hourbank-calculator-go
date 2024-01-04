@@ -1,0 +1,26 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "go",
+			"label": "go: build package",
+			"command": "build",
+			"args": [
+				"${fileDirname}"
+			],
+			"problemMatcher": [
+				"$go"
+			],
+			"group": "build",
+			"detail": "cd c:\\Users\\blafielt\\source\\repos\\hours-bank-calculator; go build ${fileDirname}"
+		},
+		{
+			"type": "go",
+			"label": "go: cleanup",
+			"command": "clean",
+			"problemMatcher": [
+				"$go"
+			]
+		}
+	]
+}

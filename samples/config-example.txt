@@ -1,0 +1,20 @@
+import_path = .\samples\manual-report-2023.txt
+file_type = custom
+mode = check
+#import_path = C:\Path\To\Clockify_Time_Report_Detailed_01.01.2023-31.12.2023.csv
+#file_type = clockify_export
+#mode = report
+#filetype = custom|customshort|clockify_export
+#mode = check|report
+#export_dir = C:\Path\To\ExportDir
+required_daily_hours = 7,25
+# How much balance initially from previous calculations, before current calc period
+initial_balance = 0
+csv_delimiter = ","
+date_layout = 02.01.2006
+# weekdays not normal workdays (excluded from required daily hours)
+# pure addition to hour balance if worked those days
+excluded_weekdays = sat,sun
+# Names of excluded tasks from balance (not added in balance)
+# Exact (lowercase) match for the task name in clockify
+excluded_clockify_tasks = list, of, task names
