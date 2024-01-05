@@ -129,7 +129,6 @@ func oper(export bool) {
 					return
 				}
 				defer outFile.Close()
-				_ = outFile
 				printlnF := func(a ...any) (n int, err error) {
 					return outFile.WriteString(fmt.Sprintln(a...))
 				}

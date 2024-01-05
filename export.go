@@ -105,7 +105,6 @@ func ExportCustomFile(config *Config, global *Common, entries *ListWeekEntry) {
 	// Verify against each entry recorded balance matches etc
 	for i, e := range *entries {
 		fmt.Printf("\nMonth: %v Year: %v\nWeek: %s\nWorked: %.2f\nDiff: %.2f\nReported Balance: %.2f\n", e.month, e.year, *e.trange, e.worked, e.diff, e.balance)
-
 		if i == 0 {
 			// if entry is FIRST only (not middle, last)
 			// All stuff specific to first entry
@@ -139,7 +138,6 @@ func ExportCustomFile(config *Config, global *Common, entries *ListWeekEntry) {
 				}
 			}
 		}
-
 		if i == len(*entries)-1 {
 			// if entry is LAST only (not first, middle)
 			// All stuff specific to last entry
