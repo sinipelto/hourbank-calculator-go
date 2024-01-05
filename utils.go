@@ -84,7 +84,8 @@ func ValidateMonthYearRow(str *string) (match bool) {
 	if str == nil {
 		return false
 	}
-	return YEARMONTH_REGEX.MatchString(*str)
+	match = YEARMONTH_REGEX.MatchString(*str)
+	return
 }
 
 func ParseMonthYearRow(str *string) (year Year, month Month, err error) {
@@ -126,6 +127,14 @@ func StrRemoveFromBothEnds(str *string, trim *string) string {
 
 func AsPtr[T any](v T, u ...any) *T {
 	return &v
+}
+
+func StringsJoin(arr *ListString, sep *string) *string {
+	tmp := make([]string, 0, len(*arr))
+	for _, e := range *arr {
+		tmp = append(tmp, *e)
+	}
+	return AsPtr(strings.Join(tmp, *sep))
 }
 
 // Assign plus signs in front of decimal string representation

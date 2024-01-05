@@ -34,12 +34,16 @@ type OperationModeMap map[string]OperationMode
 type WeekdayRevMap map[time.Weekday]*string
 type OperationModeRevMap map[OperationMode]*string
 
+type FuncPrintf func(format string, a ...any) (n int, err error)
+type FuncPrintln func(a ...any) (n int, err error)
+
 type Config struct {
 	IfType           ImportFileType
 	Mode             OperationMode
 	ImportFilePath   *string
 	ImportFileName   *string
 	ExportFilePath   *string
+	ExportFileName   *string
 	CsvDelimiter     *string
 	DateParseLayout  *string
 	ExcludedWeekdays *ListWeekday
@@ -79,7 +83,7 @@ var (
 
 const (
 	CNF_IMPORT_PATH_STR       string = "import_path"
-	CNF_EXPORT_PATH_STR       string = "export_path"
+	CNF_EXPORT_PATH_STR       string = "export_dir"
 	CNF_FILE_TYPE_STR         string = "file_type"
 	CNF_DAILY_HOURS_STR       string = "required_daily_hours"
 	CNF_MODE_STR              string = "mode"

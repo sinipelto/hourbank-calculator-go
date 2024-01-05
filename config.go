@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func ConfigErrorMissing(k *string) error {
@@ -104,7 +106,8 @@ func ParseValidateConfig(path string) (*Config, error) {
 					println("ERROR: Export file path not pointing to a directory. Double check export file path.")
 					return nil, errors.New("export file path is not a directory")
 				}
-				config.ExportFilePath = v
+				config.ExportFileName = AsPtr(fmt.Sprintf("Report_%s.txt", time.Now().Format("2006-01-02")))
+				config.ExportFilePath = AsPtr(filepath.Join(*v, *config.ExportFileName))
 			}
 		case CNF_CSV_DELIM_STR:
 			if v == nil {

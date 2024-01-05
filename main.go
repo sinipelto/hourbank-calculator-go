@@ -80,14 +80,15 @@ func oper(export bool) {
 	}
 
 	if config.ExcludedWeekdays != nil {
-		fmt.Println("Ignored Weekdays:")
+		var wdays ListString = make(ListString, 0, len(*config.ExcludedWeekdays))
 		for _, e := range *config.ExcludedWeekdays {
-			fmt.Println(e.String())
+			wdays = append(wdays, AsPtr(e.String()))
 		}
+		fmt.Printf("Excluded Weekdays: %s\n", *StringsJoin(&wdays, AsPtr(", ")))
 	}
 	fmt.Println("Daily Work Hours:", config.DailyHours)
 	fmt.Println("Weekly Work Hours:", global.weeklyHours)
-	fmt.Printf("Running In '%s' Mode", *OperationModeRevMapping[config.Mode])
+	fmt.Println("Running in mode:", *OperationModeRevMapping[config.Mode])
 	fmt.Println()
 
 	switch config.Mode {
@@ -106,18 +107,42 @@ func oper(export bool) {
 				fmt.Println("ERROR: No entries to report from input file. Double check input file correct.")
 				return
 			}
-
-			fmt.Println()
-			fmt.Println("Listing collected days:")
-			fmt.Println()
-
-			// First write to stdout
-			_ = ExportClockifyReport(config, global, entries2, fmt.Printf, fmt.Println)
-
-			// Then write into export file
-			// outfile, err := nil
-			// _ = ExportClockifyReport(config, global, entries2, nil, nil)
-			// println("Report exported into report file:", outFile)
+			// If not exporting, write to stdout
+			if !export {
+				fmt.Println("Listing collected days:")
+				fmt.Println()
+				err = ExportClockifyReport(config, global, entries2, fmt.Printf, fmt.Println)
+				if err != nil {
+					fmt.Println("ERROR: Failed to display report file:", err.Error())
+					return
+				}
+			} else {
+				// Then write into export file
+				fmt.Println("Exporting report into file..")
+				if config.ExportFilePath == nil {
+					fmt.Println("ERROR: Report export requested but export dir not defined in config.")
+					return
+				}
+				outFile, err := os.Create(*config.ExportFilePath)
+				if err != nil {
+					fmt.Printf("ERROR: Could not open export file: %s Error: %s\n", *config.ExportFilePath, err.Error())
+					return
+				}
+				defer outFile.Close()
+				_ = outFile
+				printlnF := func(a ...any) (n int, err error) {
+					return outFile.WriteString(fmt.Sprintln(a...))
+				}
+				printfF := func(format string, a ...any) (n int, err error) {
+					return outFile.WriteString(fmt.Sprintf(format, a...))
+				}
+				err = ExportClockifyReport(config, global, entries2, printfF, printlnF)
+				if err != nil {
+					fmt.Println("ERROR: Failed to export report file:", err.Error())
+					return
+				}
+				fmt.Println("Report exported OK into file:", *config.ExportFileName)
+			}
 		default:
 			fmt.Println("ERROR: Handling not defined for given input file type.")
 			return
