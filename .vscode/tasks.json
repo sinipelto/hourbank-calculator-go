@@ -3,6 +3,22 @@
 	"tasks": [
 		{
 			"type": "go",
+			"label": "go: build main",
+			"command": "build",
+			"args": [
+				"${workspaceFolder}"
+			],
+			"problemMatcher": [
+				"$go"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "cd ${workspaceFolder}; go build ${workspaceFolder}"
+		},
+		{
+			"type": "go",
 			"label": "go: build package",
 			"command": "build",
 			"args": [
@@ -11,8 +27,11 @@
 			"problemMatcher": [
 				"$go"
 			],
-			"group": "build",
-			"detail": "cd c:\\Users\\blafielt\\source\\repos\\hours-bank-calculator; go build ${fileDirname}"
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			},
+			"detail": "cd ${workspaceFolder}; go build ${fileDirname}"
 		},
 		{
 			"type": "go",
