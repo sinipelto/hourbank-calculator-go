@@ -47,3 +47,7 @@ go.work
 
 # Personal config file
 /config.txt
+
+# Output dir contents
+/output/*
+!/output/.keep
