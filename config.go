@@ -11,6 +11,10 @@ import (
 	"time"
 )
 
+// Path to the config file to parse
+// Has to be built-in
+const CONFIG_FILE = "config.txt"
+
 func ConfigErrorMissing(k *string) error {
 	fmt.Printf("ERROR: Config: '%s' is required but was not defined in config file.\n", *k)
 	return errors.New("required config parameter is not set")
@@ -30,23 +34,46 @@ func WarnEmpty(k *string, v *string) {
 	fmt.Printf("WARNING: Failed to parse '%s' from config. Found empty value(s) in: '%s' defined in config file.\n", *k, *v)
 }
 
-func ParseValidateConfig(path string) (*Config, error) {
-	f, err := os.Open(path)
+func ParseValidateConfig() (config *Config, err error) {
+	path, err := os.Executable()
+
+	if err != nil {
+		fmt.Println("ERROR: Could not get current executable path. Err:", err.Error())
+		return
+	}
+
+	// Get current executable dir, parse, conv to abs, validate
+	path = filepath.Dir(path)
+	path, err = filepath.Abs(path)
+
+	if err != nil {
+		fmt.Println("ERROR: Could not get current working directory. Err:", err.Error())
+		return
+	}
+
+	f, err := os.Open(filepath.Join(path, CONFIG_FILE))
 
 	if err != nil {
 		fmt.Printf("ERROR: Failed to open config (path: %s) Err: %s\n", path, err.Error())
-		return nil, err
+		return
 	}
-	defer f.Close()
 
 	scanner := bufio.NewScanner(f)
+
+	if err != nil {
+		fmt.Printf("ERROR: Could not open or parse config file or config is invalid. "+
+			"Double check exists file: %s in current directory. Err: %s\n", CONFIG_FILE, err)
+		f.Close()
+		return
+	}
 
 	var configMapping = EmptyConfigurationMapping()
 
 	for scanner.Scan() {
-		if err := scanner.Err(); err != nil {
+		if err = scanner.Err(); err != nil {
 			fmt.Println("ERROR: Failed to read line from config. Err:", err.Error())
-			return nil, err
+			f.Close()
+			return
 		}
 
 		// Trim spaces from ends
@@ -61,6 +88,7 @@ func ParseValidateConfig(path string) (*Config, error) {
 
 		if len(raw) != 2 {
 			fmt.Println("ERROR: Invalid line in config:", rawstr)
+			f.Close()
 			return nil, errors.New("invalid line in config file")
 		}
 
@@ -68,13 +96,20 @@ func ParseValidateConfig(path string) (*Config, error) {
 		val := strings.ToLower(strings.TrimSpace(raw[1]))
 
 		if configMapping[key] != nil {
+			f.Close()
 			return nil, errors.New("detected duplicate config key in config file")
 		}
 
 		configMapping[key] = &val
 	}
 
-	config := &Config{}
+	// Close the file after parsed through
+	if err = f.Close(); err != nil {
+		fmt.Println("ERROR: Failed to close config file after reading:", err.Error())
+		return
+	}
+
+	config = &Config{}
 
 	for k, v := range configMapping {
 		switch k {
@@ -84,13 +119,18 @@ func ParseValidateConfig(path string) (*Config, error) {
 				return nil, ConfigErrorMissing(&k)
 			}
 			// Collect Imported filename for later exporting purposes
+			// Assert: path = abspath or path = relpath to executable
 			// Assert: path == regular file, exists
 			stat, err := os.Stat(*v)
 			if err != nil {
-				return nil, ConfigErrorParse(&k, v, err)
+				// Try relative path to executable path
+				stat, err = os.Stat(filepath.Join(path, *v))
+				if err != nil {
+					return nil, ConfigErrorParse(&k, v, err)
+				}
 			}
-			if stat.IsDir() {
-				println("ERROR: Import file path not pointing to a file. Double check import file path.")
+			if !stat.Mode().IsRegular() {
+				println("ERROR: Import file path not pointing to a regular file. Double check import file path in config.")
 				return nil, errors.New("import file path is not regular file")
 			}
 			config.ImportFilePath = v
@@ -100,7 +140,11 @@ func ParseValidateConfig(path string) (*Config, error) {
 			if v != nil {
 				stat, err := os.Stat(*v)
 				if err != nil {
-					return nil, ConfigErrorParse(&k, v, err)
+					// Try relative path to executable path
+					stat, err = os.Stat(filepath.Join(path, *v))
+					if err != nil {
+						return nil, ConfigErrorParse(&k, v, err)
+					}
 				}
 				if !stat.IsDir() {
 					println("ERROR: Export file path not pointing to a directory. Double check export file path.")

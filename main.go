@@ -4,12 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"path/filepath"
 )
-
-// Path to the config file to parse
-// Has to be built-in
-const CONFIG = "config.txt"
 
 func ConsoleBlock() {
 	reader := bufio.NewReader(os.Stdin)
@@ -38,18 +33,11 @@ func oper(export bool) {
 	// Deferred, will be called when this func returns
 	defer ConsoleBlock()
 
-	cpath, perr := os.Getwd()
-
-	if perr != nil {
-		fmt.Println("ERROR: Could not get current directory. Err:", perr.Error())
-		return
-	}
-
-	config, err := ParseValidateConfig(filepath.Join(cpath, CONFIG))
+	config, err := ParseValidateConfig()
 
 	if err != nil {
 		fmt.Printf("ERROR: Could not open or parse config file or config is invalid. "+
-			"Double check exists file: %s in current directory. Err: %s\n", CONFIG, err)
+			"Double check exists file: %s in current directory. Err: %s\n", CONFIG_FILE, err)
 		return
 	}
 
