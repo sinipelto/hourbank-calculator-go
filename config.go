@@ -111,8 +111,26 @@ func ParseValidateConfig() (config *Config, err error) {
 
 	config = &Config{}
 
+	importMode, ok := configMapping[CNF_IMPORT_MODE]
+	if !ok {
+		return nil, ConfigErrorMissing(AsPtr(CNF_IMPORT_MODE))
+	}
+	config.ImportMode, err = ParseImportMode(importMode)
+	if err != nil {
+		return nil, ConfigErrorParse(AsPtr(CNF_IMPORT_MODE), configMapping[CNF_IMPORT_MODE], err)
+	}
+
 	for k, v := range configMapping {
 		switch k {
+		case CNF_IMPORT_MODE:
+			// Compulsory field
+			if v == nil {
+				return nil, ConfigErrorMissing(&k)
+			}
+			config.ImportMode, err = ParseImportMode(v)
+			if err != nil {
+				return nil, ConfigErrorParse(&k, v, err)
+			}
 		case CNF_IMPORT_PATH_STR:
 			// Compulsory field
 			if v == nil {
@@ -163,11 +181,11 @@ func ParseValidateConfig() (config *Config, err error) {
 				return nil, ConfigErrorMissing(&k)
 			}
 			config.DateParseLayout = v
-		case CNF_MODE_STR:
+		case CNF_OPERATION_MODE_STR:
 			if v == nil {
 				return nil, ConfigErrorMissing(&k)
 			}
-			config.Mode, err = ParseOperationMode(v)
+			config.OperationMode, err = ParseOperationMode(v)
 			if err != nil {
 				return nil, ConfigErrorParse(&k, v, err)
 			}
@@ -253,7 +271,7 @@ func ParseValidateConfig() (config *Config, err error) {
 	}
 
 	// If import file is exported/generated, there is no point doing any checking/validation
-	if config.Mode == CHECK_MODE && config.IfType == CLOCKIFY_FILE {
+	if config.OperationMode == CHECK_MODE && config.IfType == CLOCKIFY_FILE {
 		println("ERROR: Current selected mode and import file type are incompatible. " +
 			"Please update config: select either check mode with ANY CUSTOM import, or report mode with ANY import file.")
 		return nil, errors.New("incompatible mode and file")

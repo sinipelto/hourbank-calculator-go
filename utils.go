@@ -31,6 +31,21 @@ func ParseOperationMode(str *string) (c OperationMode, err error) {
 	return
 }
 
+func ParseImportMode(str *string) (c ImportMode, err error) {
+	if str == nil {
+		return 255, errors.New("ERROR: input ptr was null")
+	}
+	*str = strings.TrimSpace(*str)
+	if *str == "" {
+		return 255, errors.New("ERROR: input string was empty")
+	}
+	c, ok := ImportModeMapping[*str]
+	if !ok {
+		return 255, errors.New("ERROR: failed to parse given input to value")
+	}
+	return
+}
+
 func ParseWeekday(str *string) (*time.Weekday, error) {
 	if str == nil {
 		return nil, errors.New("ERROR: input ptr was null")

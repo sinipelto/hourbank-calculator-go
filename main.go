@@ -76,10 +76,10 @@ func oper(export bool) {
 	}
 	fmt.Println("Daily Work Hours:", config.DailyHours)
 	fmt.Println("Weekly Work Hours:", global.weeklyHours)
-	fmt.Println("Running in mode:", *OperationModeRevMapping[config.Mode])
+	fmt.Println("Running in mode:", *OperationModeRevMapping[config.OperationMode])
 	fmt.Println()
 
-	switch config.Mode {
+	switch config.OperationMode {
 	case CHECK_MODE:
 		switch config.IfType {
 		case CUSTOM_FILE:
