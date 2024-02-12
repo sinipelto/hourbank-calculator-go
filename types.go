@@ -93,20 +93,20 @@ var (
 
 const (
 	CNF_IMPORT_MODE           string = "import_mode"
+	CNF_DATE_PARSE_STR        string = "date_layout"
+	CNF_CLOCKIFY_WS_ID        string = "clockify_workspace_id"
 	CNF_IMPORT_PATH_STR       string = "import_path"
 	CNF_EXPORT_PATH_STR       string = "export_dir"
 	CNF_FILE_TYPE_STR         string = "file_type"
 	CNF_DAILY_HOURS_STR       string = "required_daily_hours"
 	CNF_OPERATION_MODE_STR    string = "operation_mode"
 	CNF_CSV_DELIM_STR         string = "csv_delimiter"
-	CNF_DATE_PARSE_STR        string = "date_layout"
 	CNF_EXCLUDED_WEEKDAYS_STR string = "excluded_weekdays"
 	CNF_INITIAL_BALANCE_STR   string = "initial_balance"
 	CNF_EXCLUDED_TASKS_STR    string = "excluded_clockify_tasks"
 	CNF_CLOCKIFY_API_BASE     string = "clockify_api_base_url"
 	CNF_CLOCKIFY_REPORT_URL   string = "clockify_api_report_url"
 	CNF_CLOCKIFY_API_KEY      string = "clockify_api_key"
-	CNF_CLOCKIFY_WS_ID        string = "clockify_workspace_id"
 	CNF_CLOCKIFY_START        string = "clockify_report_start"
 	CNF_CLOCKIFY_END          string = "clockify_report_end"
 )
@@ -114,23 +114,43 @@ const (
 func EmptyConfigurationMapping() StringPtrMap {
 	return StringPtrMap{
 		CNF_IMPORT_MODE:           nil,
+		CNF_DATE_PARSE_STR:        nil,
+		CNF_CLOCKIFY_WS_ID:        nil,
 		CNF_IMPORT_PATH_STR:       nil,
 		CNF_EXPORT_PATH_STR:       nil,
 		CNF_FILE_TYPE_STR:         nil,
 		CNF_DAILY_HOURS_STR:       nil,
 		CNF_OPERATION_MODE_STR:    nil,
 		CNF_CSV_DELIM_STR:         nil,
-		CNF_DATE_PARSE_STR:        nil,
 		CNF_EXCLUDED_WEEKDAYS_STR: nil,
 		CNF_INITIAL_BALANCE_STR:   nil,
 		CNF_EXCLUDED_TASKS_STR:    nil,
 		CNF_CLOCKIFY_API_BASE:     nil,
 		CNF_CLOCKIFY_REPORT_URL:   nil,
 		CNF_CLOCKIFY_API_KEY:      nil,
-		CNF_CLOCKIFY_WS_ID:        nil,
 		CNF_CLOCKIFY_START:        nil,
 		CNF_CLOCKIFY_END:          nil,
 	}
+}
+
+var ConfigurationIndexer = &ListString{
+	AsPtr(CNF_IMPORT_MODE),
+	AsPtr(CNF_DATE_PARSE_STR),
+	AsPtr(CNF_CLOCKIFY_WS_ID),
+	AsPtr(CNF_IMPORT_PATH_STR),
+	AsPtr(CNF_EXPORT_PATH_STR),
+	AsPtr(CNF_FILE_TYPE_STR),
+	AsPtr(CNF_DAILY_HOURS_STR),
+	AsPtr(CNF_OPERATION_MODE_STR),
+	AsPtr(CNF_CSV_DELIM_STR),
+	AsPtr(CNF_EXCLUDED_WEEKDAYS_STR),
+	AsPtr(CNF_INITIAL_BALANCE_STR),
+	AsPtr(CNF_EXCLUDED_TASKS_STR),
+	AsPtr(CNF_CLOCKIFY_API_BASE),
+	AsPtr(CNF_CLOCKIFY_REPORT_URL),
+	AsPtr(CNF_CLOCKIFY_API_KEY),
+	AsPtr(CNF_CLOCKIFY_START),
+	AsPtr(CNF_CLOCKIFY_END),
 }
 
 // Define column constants

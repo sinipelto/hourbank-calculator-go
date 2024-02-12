@@ -111,40 +111,108 @@ func ParseValidateConfig() (config *Config, err error) {
 
 	config = &Config{}
 
-	importMode, ok := configMapping[CNF_IMPORT_MODE]
+	// Needed to decide if reading some config values
+	impModeKey := AsPtr(CNF_IMPORT_MODE)
+	importMode, ok := configMapping[*impModeKey]
 	if !ok {
-		return nil, ConfigErrorMissing(AsPtr(CNF_IMPORT_MODE))
+		return nil, ConfigErrorMissing(impModeKey)
 	}
 	config.ImportMode, err = ParseImportMode(importMode)
 	if err != nil {
-		return nil, ConfigErrorParse(AsPtr(CNF_IMPORT_MODE), configMapping[CNF_IMPORT_MODE], err)
+		return nil, ConfigErrorParse(impModeKey, importMode, err)
 	}
 
-	for k, v := range configMapping {
-		switch k {
-		case CNF_IMPORT_MODE:
-			// Compulsory field
-			if v == nil {
-				return nil, ConfigErrorMissing(&k)
+	// Needed to parse the datetimes out of the config
+	dateParseKey := AsPtr(CNF_DATE_PARSE_STR)
+	dateParse, ok := configMapping[*dateParseKey]
+	if !ok {
+		return nil, ConfigErrorMissing(impModeKey)
+	}
+	if dateParse == nil {
+		return nil, ConfigErrorMissing(dateParseKey)
+	}
+	config.DateParseLayout = dateParse
+
+	for _, repl := range *ConfigurationIndexer {
+		v := configMapping[*repl]
+		switch *repl {
+		// case CNF_IMPORT_MODE:
+		// 	// Compulsory field
+		// 	if v == nil {
+		// 		return nil, ConfigErrorMissing(k)
+		// 	}
+		// 	config.ImportMode, err = ParseImportMode(v)
+		// 	if err != nil {
+		// 		return nil, ConfigErrorParse(k, v, err)
+		// 	}
+		case CNF_CLOCKIFY_API_BASE:
+			// Needed only if using api mode
+			if config.ImportMode == API_MODE {
+				// Compulsory field
+				if v == nil {
+					return nil, ConfigErrorMissing(v)
+				}
+				// TODO: parse uri?
+				config.ClockifyApiBase = v
 			}
-			config.ImportMode, err = ParseImportMode(v)
-			if err != nil {
-				return nil, ConfigErrorParse(&k, v, err)
+		case CNF_CLOCKIFY_API_KEY:
+			// Needed only if using api mode
+			if config.ImportMode == API_MODE {
+				// Compulsory field
+				if v == nil {
+					return nil, ConfigErrorMissing(repl)
+				}
+				config.ClockifyApiKey = v
+			}
+		case CNF_CLOCKIFY_WS_ID:
+			// Needed only if using api mode
+			if config.ImportMode == API_MODE {
+				// Compulsory field
+				if repl == nil {
+					return nil, ConfigErrorMissing(repl)
+				}
+				config.ClockifyWorkspaceId = v
+			}
+		case CNF_CLOCKIFY_START:
+			// Needed only if using api mode
+			if config.ImportMode == API_MODE {
+				// Compulsory field
+				if repl == nil {
+					return nil, ConfigErrorMissing(repl)
+				}
+				val, err := time.Parse(*config.DateParseLayout, *repl)
+				if err != nil {
+					return nil, ConfigErrorParse(repl, v, err)
+				}
+				config.ClockifyReportStart = &val
+			}
+		case CNF_CLOCKIFY_END:
+			// Needed only if using api mode
+			if config.ImportMode == API_MODE {
+				// Compulsory field
+				if repl == nil {
+					return nil, ConfigErrorMissing(repl)
+				}
+				val, err := time.Parse(*config.DateParseLayout, *repl)
+				if err != nil {
+					return nil, ConfigErrorParse(repl, v, err)
+				}
+				config.ClockifyReportStart = &val
 			}
 		case CNF_IMPORT_PATH_STR:
 			// Compulsory field
-			if v == nil {
-				return nil, ConfigErrorMissing(&k)
+			if repl == nil {
+				return nil, ConfigErrorMissing(repl)
 			}
 			// Collect Imported filename for later exporting purposes
 			// Assert: path = abspath or path = relpath to executable
 			// Assert: path == regular file, exists
-			stat, err := os.Stat(*v)
+			stat, err := os.Stat(*repl)
 			if err != nil {
 				// Try relative path to executable path
-				stat, err = os.Stat(filepath.Join(path, *v))
+				stat, err = os.Stat(filepath.Join(path, *repl))
 				if err != nil {
-					return nil, ConfigErrorParse(&k, v, err)
+					return nil, ConfigErrorParse(repl, v, err)
 				}
 			}
 			if !stat.Mode().IsRegular() {
@@ -155,13 +223,13 @@ func ParseValidateConfig() (config *Config, err error) {
 			config.ImportFileName = AsPtr(stat.Name())
 		case CNF_EXPORT_PATH_STR:
 			// Optional field
-			if v != nil {
-				stat, err := os.Stat(*v)
+			if repl != nil {
+				stat, err := os.Stat(*repl)
 				if err != nil {
 					// Try relative path to executable path
-					stat, err = os.Stat(filepath.Join(path, *v))
+					stat, err = os.Stat(filepath.Join(path, *repl))
 					if err != nil {
-						return nil, ConfigErrorParse(&k, v, err)
+						return nil, ConfigErrorParse(repl, v, err)
 					}
 				}
 				if !stat.IsDir() {
@@ -169,69 +237,64 @@ func ParseValidateConfig() (config *Config, err error) {
 					return nil, errors.New("export file path is not a directory")
 				}
 				config.ExportFileName = AsPtr(fmt.Sprintf("Report_%s.txt", time.Now().Format("2006-01-02")))
-				config.ExportFilePath = AsPtr(filepath.Join(*v, *config.ExportFileName))
+				config.ExportFilePath = AsPtr(filepath.Join(*repl, *config.ExportFileName))
 			}
 		case CNF_CSV_DELIM_STR:
-			if v == nil {
-				return nil, ConfigErrorMissing(&k)
+			if repl == nil {
+				return nil, ConfigErrorMissing(repl)
 			}
 			config.CsvDelimiter = v
-		case CNF_DATE_PARSE_STR:
-			if v == nil {
-				return nil, ConfigErrorMissing(&k)
-			}
-			config.DateParseLayout = v
 		case CNF_OPERATION_MODE_STR:
-			if v == nil {
-				return nil, ConfigErrorMissing(&k)
+			if repl == nil {
+				return nil, ConfigErrorMissing(repl)
 			}
-			config.OperationMode, err = ParseOperationMode(v)
+			config.OperationMode, err = ParseOperationMode(repl)
 			if err != nil {
-				return nil, ConfigErrorParse(&k, v, err)
+				return nil, ConfigErrorParse(repl, v, err)
 			}
 		case CNF_FILE_TYPE_STR:
-			if v == nil {
-				return nil, ConfigErrorMissing(&k)
+			if repl == nil {
+				return nil, ConfigErrorMissing(repl)
 			}
-			config.IfType, err = ParseInputFileType(v)
+			config.IfType, err = ParseInputFileType(repl)
 			if err != nil {
-				return nil, ConfigErrorParse(&k, v, err)
+				return nil, ConfigErrorParse(repl, v, err)
 			}
 		case CNF_DAILY_HOURS_STR:
-			if v == nil {
-				return nil, ConfigErrorMissing(&k)
+			if repl == nil {
+				return nil, ConfigErrorMissing(repl)
 			}
-			config.DailyHours, err = strconv.ParseFloat(StrFloatFiToUs(v), 64)
+			config.DailyHours, err = strconv.ParseFloat(StrFloatFiToUs(repl), 64)
 			if err != nil {
-				return nil, ConfigErrorParse(&k, v, err)
+				return nil, ConfigErrorParse(repl, v, err)
 			}
 		case CNF_INITIAL_BALANCE_STR:
 			// Optional field
-			if v != nil {
-				conv, err := strconv.ParseFloat(StrFloatFiToUs(v), 64)
+			if repl != nil {
+				conv, err := strconv.ParseFloat(StrFloatFiToUs(repl), 64)
 				if err != nil {
-					return nil, ConfigErrorParse(&k, v, err)
+					return nil, ConfigErrorParse(repl, v, err)
 				}
 				config.InitialBalance = &conv
 			}
 		case CNF_EXCLUDED_WEEKDAYS_STR:
 			// Optional field
-			if v != nil {
+			if repl != nil {
 				// Strip, remove whitespace and convert to array
 				// "value one, value two, value three, ..." => "valueone,valuetwo,valuethree,..."
-				val := strings.Split(strings.ReplaceAll(*v, " ", ""), ",")
+				val := strings.Split(strings.ReplaceAll(*repl, " ", ""), ",")
 				if len(val) <= 0 {
-					WarnEmpty(&k, v)
+					WarnEmpty(repl, v)
 				} else {
 					// Init array, max 7 weekdays
 					config.ExcludedWeekdays = AsPtr(make(ListWeekday, 0, 7))
 					for _, e := range val {
 						conv, err := ParseWeekday(&e)
 						if err != nil {
-							return nil, ConfigErrorParse(&k, v, err)
+							return nil, ConfigErrorParse(repl, v, err)
 						}
 						if SliceContains(config.ExcludedWeekdays, conv) {
-							return nil, ConfigErrorDuplicate(&k, v)
+							return nil, ConfigErrorDuplicate(repl, v)
 						}
 						*config.ExcludedWeekdays = append(*config.ExcludedWeekdays, conv)
 					}
@@ -239,12 +302,12 @@ func ParseValidateConfig() (config *Config, err error) {
 			}
 		case CNF_EXCLUDED_TASKS_STR:
 			// Optional field
-			if v != nil {
+			if repl != nil {
 				// Convert to array
 				// "value one,value two,value three, ..."
-				val := strings.Split(*v, ",")
+				val := strings.Split(*repl, ",")
 				if len(val) <= 0 {
-					WarnEmpty(&k, v)
+					WarnEmpty(repl, v)
 				} else {
 					// 0 => we dont know in advance how many there would be
 					config.ExcludedTasks = AsPtr(make(ListString, 0))
@@ -253,11 +316,11 @@ func ParseValidateConfig() (config *Config, err error) {
 						// " value one " => "value one"
 						vval := strings.TrimSpace(e)
 						if len(vval) <= 0 {
-							WarnEmpty(&k, v)
+							WarnEmpty(repl, v)
 							continue
 						}
 						if SliceContains(config.ExcludedTasks, &vval) {
-							return nil, ConfigErrorDuplicate(&k, v)
+							return nil, ConfigErrorDuplicate(repl, v)
 						}
 						*config.ExcludedTasks = append(*config.ExcludedTasks, &vval)
 					}
@@ -265,7 +328,7 @@ func ParseValidateConfig() (config *Config, err error) {
 			}
 		default:
 			// Improve backwards compatibility - ignore (yet) undefined keys
-			fmt.Printf("WARNING: Key in config is unknown: '%s'. Double check config file. Config value ignored.\n", k)
+			fmt.Printf("WARNING: Key in config is unknown: '%s'. Double check config file. Config value ignored.\n", *repl)
 			// return nil, errors.New("unsupported configuration key in config file")
 		}
 	}
